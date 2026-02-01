@@ -1,609 +1,242 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#4f46e5">
-    <title>EduPro MAX 5.0 - Ultimate Learning Platform</title>
-
-    <!-- PWA MANIFEST (Data URI for Single File) -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"EduPro MAX","short_name":"EduPro","start_url":".","display":"standalone","theme_color":"#4f46e5","background_color":"#ffffff","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2997/2997385.png","sizes":"192x192","type":"image/png"}]}'>
-
-    <!-- LIBRARIES -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <!-- Chart.js (Analytics) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SweetAlert2 (Notifications) -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- SortableJS (Drag & Drop) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <!-- QRCode.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- SheetJS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- FIREBASE -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-
-    <style>
-        :root {
-            --primary: #4f46e5; --primary-dark: #4338ca; --secondary: #db2777; --accent: #8b5cf6;
-            --bg-body: #f8fafc; --bg-card: #ffffff; --bg-sidebar: #0f172a;
-            --text-main: #1e293b; --text-sub: #64748b; --border: #e2e8f0;
-            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            --radius: 16px;
-        }
-        .dark-mode {
-            --bg-body: #0f172a; --bg-card: #1e293b; --bg-sidebar: #020617;
-            --text-main: #f1f5f9; --text-sub: #94a3b8; --border: #334155;
-            --shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
-        }
-        * { box-sizing: border-box; font-family: 'Roboto', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg-body); color: var(--text-main); margin: 0; min-height: 100vh; overflow-x: hidden; transition: 0.3s; }
-        
-        /* LAYOUT & UTILS */
-        .flex-center { display: flex; align-items: center; justify-content: center; }
-        .flex-between { display: flex; align-items: center; justify-content: space-between; }
-        .grid-responsive { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: var(--bg-card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); position: relative; border: 1px solid var(--border); transition: 0.3s; }
-        .card:hover { transform: translateY(-2px); border-color: var(--primary); }
-        .btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
-        .input-group { margin-bottom: 15px; position: relative; }
-        .input-field { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); outline: none; }
-        .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-        
-        /* SIDEBAR */
-        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; background: var(--bg-sidebar); z-index: 100; transition: 0.3s; display: flex; flex-direction: column; color: #cbd5e1; }
-        .sidebar-brand { padding: 30px; font-size: 1.5rem; font-weight: 800; color: white; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .nav-item { padding: 16px 30px; cursor: pointer; display: flex; gap: 15px; align-items: center; transition: 0.2s; border-right: 3px solid transparent; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; border-right-color: var(--secondary); }
-        .main { margin-left: 260px; padding: 30px; transition: 0.3s; }
-        
-        /* ADVANCED QUESTION STYLES */
-        .sortable-list { list-style: none; padding: 0; }
-        .sortable-item { background: var(--bg-body); padding: 15px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border); cursor: grab; display: flex; align-items: center; gap: 10px; }
-        .sortable-item:active { cursor: grabbing; background: var(--primary); color: white; }
-        .match-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .match-col { display: flex; flex-direction: column; gap: 10px; }
-        .match-item { padding: 15px; background: var(--bg-body); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; }
-        .match-item.selected { border-color: var(--primary); background: rgba(79, 70, 229, 0.1); }
-        .match-item.matched { background: var(--success); color: white; opacity: 0.8; pointer-events: none; }
-
-        /* LOADING & MODAL */
-        .loader-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .spinner { width: 50px; height: 50px; border: 4px solid #fff; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.active { transform: translateX(0); }
-            .main { margin-left: 0; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tool Reup Video - Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --bg: #0d0d1a;
+      --sidebar-bg: #141426;
+      --card-bg: #1a1a2e;
+      --text: #e0e0ff;
+      --text-muted: #a0a0cc;
+      --accent: #7c3aed;
+      --accent-dark: #5b21b6;
+      --border: #2a2a4a;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+    .sidebar {
+      width: 240px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      height: 100vh;
+      position: fixed;
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+    .logo {
+      text-align: center;
+      padding: 0 0 30px;
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+    .menu-item {
+      padding: 14px 24px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .menu-item:hover, .menu-item.active {
+      background: rgba(124,58,237,0.12);
+      color: white;
+    }
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      padding: 30px;
+    }
+    h1 { font-size: 2rem; margin-bottom: 30px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      color: white;
+    }
+    .connect-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .connect-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+    .connect-box i { font-size: 2.5rem; margin-bottom: 12px; color: var(--accent); }
+    .status { font-size: 0.9rem; margin: 8px 0; }
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .btn:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: white;
+      margin: 8px 0;
+    }
+    .info { font-size: 0.9rem; color: var(--text-muted); margin-top: 16px; }
+  </style>
 </head>
 <body>
 
-    <div id="loader" class="loader-overlay hidden"><div class="spinner"></div></div>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">Tool Reup Video</div>
+    <div class="menu-item active"><i class="fas fa-home"></i> Tổng quan</div>
+    <div class="menu-item"><i class="fas fa-download"></i> Tải video</div>
+    <div class="menu-item"><i class="fas fa-key"></i> Tìm chủ đề (Key)</div>
+    <div class="menu-item"><i class="fas fa-tv"></i> Tải kênh</div>
+    <div class="menu-item"><i class="fas fa-shield-alt"></i> Lách bản quyền</div>
+    <div class="menu-item"><i class="fas fa-tools"></i> Công cụ nâng cao</div>
+    <div class="menu-item"><i class="fas fa-film"></i> Review Phim</div>
+    <div class="menu-item"><i class="fas fa-folder"></i> Thư viện video</div>
+    <div class="menu-item"><i class="fas fa-rocket"></i> Auto Upload</div>
+    <div class="menu-item"><i class="fas fa-cog"></i> Cài đặt</div>
+  </div>
 
-    <!-- AUTH SCREEN -->
-    <div id="view-auth" class="flex-center" style="min-height: 100vh; background: var(--bg-body); position: absolute; inset:0; z-index: 200;">
-        <div class="card" style="width: 100%; max-width: 400px; padding: 40px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="margin: 0; color: var(--primary); font-size: 2.5rem;"><i class="fas fa-layer-group"></i></h1>
-                <h2 style="margin: 10px 0;">EduPro MAX 5.0</h2>
-                <p style="color: var(--text-sub);">Enterprise Learning System</p>
-                <div class="flex-center" style="gap:10px; margin-top:10px">
-                    <button class="btn-outline" style="padding:5px 10px; font-size:0.8rem" onclick="Lang.set('vi')">VI</button>
-                    <button class="btn-outline" style="padding:5px 10px; font-size:0.8rem" onclick="Lang.set('en')">EN</button>
-                    <button class="btn-outline" style="padding:5px 10px; font-size:0.8rem" onclick="Lang.set('jp')">JP</button>
-                </div>
-            </div>
+  <!-- Main Content -->
+  <div class="main">
+    <h1>Auto Upload & Reup Tool</h1>
 
-            <!-- LOGIN -->
-            <div id="f-login">
-                <div class="input-group"><input id="l-user" class="input-field" placeholder="Username"></div>
-                <div class="input-group"><input id="l-pass" type="password" class="input-field" placeholder="Password"></div>
-                <div id="otp-area" class="input-group hidden">
-                    <input id="l-otp" class="input-field" style="text-align:center; letter-spacing:5px; font-weight:bold" placeholder="OTP (2FA)">
-                    <small style="color:var(--text-sub); display:block; text-align:center; margin-top:5px">Nhập mã từ ứng dụng hoặc email</small>
-                </div>
-                <button class="btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="Auth.login()">
-                    <span data-i18n="login">ĐĂNG NHẬP</span>
-                </button>
-                <div style="text-align:center; margin-top:20px; font-size:0.9rem">
-                    <span data-i18n="no_acc">Chưa có tài khoản?</span> <a href="#" onclick="UI.toggleAuth('reg')" style="color:var(--primary); font-weight:bold">Đăng ký</a>
-                </div>
-            </div>
-
-            <!-- REGISTER -->
-            <div id="f-reg" class="hidden">
-                <div class="input-group"><input id="r-name" class="input-field" placeholder="Full Name"></div>
-                <div class="input-group"><input id="r-user" class="input-field" placeholder="Username"></div>
-                <div class="input-group"><input id="r-pass" type="password" class="input-field" placeholder="Password"></div>
-                <div class="input-group">
-                    <select id="r-role" class="input-field">
-                        <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
-                    </select>
-                </div>
-                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="Auth.register()">ĐĂNG KÝ</button>
-                <div style="text-align:center; margin-top:20px;">
-                    <a href="#" onclick="UI.toggleAuth('login')" style="color:var(--text-sub)">Quay lại</a>
-                </div>
-            </div>
+    <!-- Kết nối tài khoản -->
+    <div class="card">
+      <div class="card-title">Kết nối tài khoản</div>
+      <div class="connect-grid">
+        <div class="connect-box">
+          <i class="fab fa-youtube"></i>
+          <div>YouTube</div>
+          <div class="status">Chưa kết nối</div>
+          <button class="btn">Kết nối</button>
         </div>
+        <div class="connect-box">
+          <i class="fab fa-tiktok"></i>
+          <div>TikTok</div>
+          <div class="status">Chưa kết nối</div>
+          <button class="btn">Kết nối</button>
+        </div>
+        <div class="connect-box">
+          <i class="fab fa-facebook"></i>
+          <div>Facebook</div>
+          <div class="status">Sắp có</div>
+          <button class="btn" disabled>Đang phát triển</button>
+        </div>
+      </div>
     </div>
 
-    <!-- MAIN APP INTERFACE -->
-    <div id="app-core" class="hidden">
-        <nav class="sidebar">
-            <div class="sidebar-brand"><i class="fas fa-cubes"></i> EduPro MAX</div>
-            <div id="nav-menu" style="flex:1; overflow-y:auto"></div>
-            <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1)">
-                <div class="flex-between" style="margin-bottom:15px">
-                    <div style="display:flex; align-items:center; gap:10px">
-                        <div id="user-avt" style="width:35px; height:35px; background:var(--secondary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold">U</div>
-                        <div>
-                            <div id="user-name" style="font-weight:bold; color:white; font-size:0.9rem">User</div>
-                            <div id="user-role" style="font-size:0.7rem; color:var(--text-sub); text-transform:uppercase">Role</div>
-                        </div>
-                    </div>
-                </div>
-                <button class="btn-outline" style="width:100%; justify-content:center; border-color:rgba(255,255,255,0.2); color:rgba(255,255,255,0.7)" onclick="Auth.logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-        </nav>
-        
-        <main class="main" id="main-view">
-            <!-- DYNAMIC CONTENT -->
-        </main>
-
-        <!-- MOBILE TOGGLE -->
-        <div style="position:fixed; bottom:20px; right:20px; z-index:90;">
-            <button class="btn-primary" style="width:50px; height:50px; border-radius:50%; justify-content:center; box-shadow:0 10px 20px rgba(0,0,0,0.2)" onclick="document.querySelector('.sidebar').classList.toggle('active')">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
+    <!-- Tạo Upload Job -->
+    <div class="card">
+      <div class="card-title">Tạo Job Upload</div>
+      <div class="form-group">
+        <label>Nền tảng</label>
+        <select>
+          <option>-- Chọn nền tảng --</option>
+          <option>YouTube Shorts</option>
+          <option>TikTok</option>
+          <option>Facebook Reels</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Chọn video</label>
+        <select>
+          <option>-- Chọn từ thư viện --</option>
+          <option>Video remix 001.mp4</option>
+          <option>Review phim hot.mp4</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tiêu đề video</label>
+        <input type="text" placeholder="Nhập tiêu đề hấp dẫn..."/>
+      </div>
+      <div class="form-group">
+        <label>Mô tả</label>
+        <textarea rows="3" placeholder="Mô tả video (optional)..."></textarea>
+      </div>
+      <button class="btn">Tạo & Upload Ngay</button>
+      <div class="info">Tài khoản: touyen | Hết hạn: 18:10:54 27/12/2025</div>
     </div>
 
-    <!-- WORKER SCRIPT (Inline Blob) -->
-    <script id="worker-js" type="javascript/worker">
-        self.onmessage = function(e) {
-            const { type, data } = e.data;
-            if (type === 'ANALYZE_STATS') {
-                // Giả lập tính toán nặng trên dữ liệu lớn
-                const { results, quizzes } = data;
-                let skillMap = {};
-                let timeTrend = [];
-                
-                results.forEach(r => {
-                    const q = quizzes.find(x => x.id === r.quizId);
-                    if(q && q.tags) {
-                        q.tags.forEach(tag => {
-                            if(!skillMap[tag]) skillMap[tag] = { total: 0, right: 0 };
-                            // Giả định đơn giản: điểm cao -> nắm vững
-                            skillMap[tag].total += 10;
-                            skillMap[tag].right += r.score;
-                        });
-                    }
-                    timeTrend.push({ d: r.timestamp, s: r.score });
-                });
-                
-                // Chuẩn bị dữ liệu cho Radar Chart
-                const tags = Object.keys(skillMap);
-                const values = tags.map(t => (skillMap[t].right / skillMap[t].total) * 100);
-                
-                self.postMessage({ type: 'STATS_DONE', radar: { labels: tags, data: values }, line: timeTrend });
-            }
-        };
-    </script>
+    <!-- Review Phim -->
+    <div class="card">
+      <div class="card-title">Tạo kịch bản Review Phim (AI)</div>
+      <div class="form-group">
+        <label>Tên phim</label>
+        <input type="text" placeholder="Ví dụ: Avengers Endgame, Squid Game..."/>
+      </div>
+      <div class="form-group">
+        <label>Phong cách</label>
+        <select>
+          <option>Hài hước, vui nhộn</option>
+          <option>Phân tích sâu sắc</option>
+          <option>Ngắn gọn, hấp dẫn</option>
+        </select>
+      </div>
+      <button class="btn">Tạo kịch bản bằng AI</button>
+    </div>
 
-    <script>
-        // --- 1. CONFIG & UTILS ---
-        const CONFIG = {
-            firebase: {
-               apiKey: "AIzaSyDioRcCSUJ5RzRrvNOa2TbIQ9c3LGH_H8I",
-               authDomain: "edupro-quiz.firebaseapp.com",
-               databaseURL: "https://edupro-quiz-default-rtdb.firebaseio.com",
-               projectId: "edupro-quiz",
-            },
-            langs: {
-                vi: { login: "Đăng Nhập", dashboard: "Tổng Quan", bank: "Ngân Hàng Câu Hỏi", stats: "Thống Kê", srs: "Ôn Tập Thông Minh", settings: "Cài Đặt", no_acc: "Chưa có tài khoản?" },
-                en: { login: "Login", dashboard: "Dashboard", bank: "Question Bank", stats: "Analytics", srs: "Smart Review", settings: "Settings", no_acc: "No account?" },
-                jp: { login: "ログイン", dashboard: "ダッシュボード", bank: "問題バンク", stats: "分析", srs: "スマート復習", settings: "設定", no_acc: "アカウントなし？" }
-            }
-        };
+    <!-- Voiceover TTS -->
+    <div class="card">
+      <div class="card-title">Cấu hình giọng đọc AI (TTS)</div>
+      <div class="form-group">
+        <label>ElevenLabs API Key</label>
+        <input type="text" placeholder="Nhập key từ elevenlabs.io"/>
+      </div>
+      <div class="form-group">
+        <label>Giọng đọc</label>
+        <select>
+          <option>Rachel (Nữ, US - gợi cảm)</option>
+          <option>Adam (Nam, US)</option>
+          <option>Antoine (Nam, Pháp)</option>
+        </select>
+      </div>
+      <button class="btn">Tạo giọng đọc mẫu</button>
+    </div>
+  </div>
 
-        const Utils = {
-            id: () => '_' + Math.random().toString(36).substr(2, 9),
-            hash: async (s) => { /* Simple mock hash */ return btoa(s).split('').reverse().join(''); },
-            date: (ts) => new Date(ts).toLocaleDateString(),
-            notify: (t, m, i='info') => Swal.fire({ title:t, text:m, icon:i, toast:true, position:'top-end', timer:3000, showConfirmButton:false }),
-            shuffle: (arr) => arr.sort(() => Math.random() - 0.5)
-        };
+  <script>
+    // Active menu khi click
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
 
-        // --- 2. INTERNATIONALIZATION (i18n) ---
-        const Lang = {
-            curr: localStorage.getItem('lang') || 'vi',
-            get: (key) => CONFIG.langs[Lang.curr][key] || key,
-            set: (l) => { localStorage.setItem('lang', l); Lang.curr = l; location.reload(); },
-            apply: () => {
-                document.querySelectorAll('[data-i18n]').forEach(e => e.innerText = Lang.get(e.dataset.i18n));
-            }
-        };
-
-        // --- 3. WORKER SETUP ---
-        const blob = new Blob([document.querySelector('#worker-js').textContent], {type: "text/javascript"});
-        const worker = new Worker(window.URL.createObjectURL(blob));
-
-        // --- 4. CORE APP STATE ---
-        const App = {
-            db: null, user: null, data: { quizzes: [], results: [], users: [], bank: [] },
-            
-            init: async () => {
-                if(!firebase.apps.length) firebase.initializeApp(CONFIG.firebase);
-                App.db = firebase.database();
-                
-                const cached = localStorage.getItem('edupro_user');
-                if(cached) {
-                    App.user = JSON.parse(cached);
-                    await App.sync();
-                    UI.init();
-                } else {
-                    $('#view-auth').classList.remove('hidden');
-                }
-                Lang.apply();
-            },
-            sync: async () => {
-                $('#loader').classList.remove('hidden');
-                const s = await App.db.ref().get();
-                const v = s.val() || {};
-                App.data = {
-                    quizzes: Object.values(v.quizzes || {}),
-                    results: Object.values(v.results || {}),
-                    users: Object.values(v.users || {}),
-                    bank: Object.values(v.bank || {})
-                };
-                $('#loader').classList.add('hidden');
-            },
-            save: async (path, data) => {
-                await App.db.ref(`${path}/${data.id}`).set(data);
-                await App.sync(); // Simple sync logic
-            }
-        };
-
-        // --- 5. AUTHENTICATION & SECURITY (OTP/QR) ---
-        const Auth = {
-            login: async () => {
-                const u = $('#l-user').value, p = $('#l-pass').value, otp = $('#l-otp').value;
-                if(!u || !p) return Utils.notify('Lỗi', 'Nhập đủ thông tin', 'warning');
-                
-                // Mock Login Check
-                const acc = App.data.users.find(x => x.username === u && x.password === await Utils.hash(p));
-                
-                if(acc) {
-                    // Check 2FA if enabled
-                    if(acc.twoFactor && !otp) {
-                        $('#otp-area').classList.remove('hidden');
-                        return Utils.notify('Bảo mật', 'Vui lòng nhập mã OTP', 'info');
-                    }
-                    if(acc.twoFactor && otp !== '123456') { // Mock OTP check
-                        return Utils.notify('Lỗi', 'Mã OTP sai', 'error');
-                    }
-
-                    App.user = acc;
-                    localStorage.setItem('edupro_user', JSON.stringify(acc));
-                    App.sync().then(UI.init);
-                } else {
-                    // Create Admin if not exists (Backdoor for first run)
-                    if(u === 'admin' && p === 'admin') {
-                        const newAdmin = { id:'admin', username:'admin', password:await Utils.hash('admin'), role:'teacher', fullname:'Super Admin' };
-                        await App.save('users', newAdmin);
-                        location.reload();
-                    } else Utils.notify('Lỗi', 'Sai thông tin', 'error');
-                }
-            },
-            register: async () => {
-                const u = $('#r-user').value, p = $('#r-pass').value;
-                if(App.data.users.find(x=>x.username===u)) return Utils.notify('Lỗi', 'Đã tồn tại', 'error');
-                const newUser = {
-                    id: Utils.id(), username: u, password: await Utils.hash(p),
-                    role: $('#r-role').value, fullname: $('#r-name').value,
-                    joined: Date.now(), srsData: {}
-                };
-                await App.save('users', newUser);
-                UI.toggleAuth('login');
-                Utils.notify('Thành công', 'Đăng nhập ngay', 'success');
-            },
-            logout: () => { localStorage.removeItem('edupro_user'); location.reload(); }
-        };
-
-        // --- 6. SRS ALGORITHM (Spaced Repetition) ---
-        const SRS = {
-            calc: (prevInterval, grade) => {
-                // SuperMemo-2 simplified
-                // Grade: 0-5 (0: Fail, 5: Perfect)
-                if (grade < 3) return { interval: 1, ease: 1.3 }; // Reset
-                let nextInt = prevInterval === 0 ? 1 : (prevInterval === 1 ? 6 : Math.round(prevInterval * 2.5));
-                return { interval: nextInt, ease: 2.5 };
-            },
-            getDue: () => {
-                // Find questions due for review from user history
-                const userSrs = App.user.srsData || {};
-                const now = Date.now();
-                const dues = [];
-                Object.keys(userSrs).forEach(qid => {
-                    if(userSrs[qid].nextReview <= now) dues.push(qid);
-                });
-                return dues;
-            }
-        };
-
-        // --- 7. UI & ROUTER ---
-        const $ = document.querySelector.bind(document);
-        const UI = {
-            toggleAuth: (mode) => {
-                $('#f-login').classList.toggle('hidden', mode !== 'login');
-                $('#f-reg').classList.toggle('hidden', mode !== 'reg');
-            },
-            init: () => {
-                $('#view-auth').classList.add('hidden');
-                $('#app-core').classList.remove('hidden');
-                $('#user-name').innerText = App.user.fullname;
-                $('#user-role').innerText = App.user.role.toUpperCase();
-                
-                // Render Menu
-                const menu = App.user.role === 'teacher' 
-                    ? [
-                        {id:'t-dash', i:'chart-pie', t:'dashboard'},
-                        {id:'t-bank', i:'database', t:'bank'},
-                        {id:'t-users', i:'users', t:'Học sinh'},
-                        {id:'t-settings', i:'cog', t:'settings'}
-                      ]
-                    : [
-                        {id:'s-dash', i:'home', t:'dashboard'},
-                        {id:'s-srs', i:'brain', t:'srs'},
-                        {id:'s-profile', i:'user-shield', t:'Bảo mật & QR'}
-                      ];
-                
-                $('#nav-menu').innerHTML = menu.map(m => `
-                    <div class="nav-item" onclick="Router.go('${m.id}')">
-                        <i class="fas fa-${m.i}" style="width:20px"></i> <span>${Lang.get(m.t)}</span>
-                    </div>`).join('');
-                
-                Router.go(menu[0].id);
-            }
-        };
-
-        const Router = {
-            go: (view) => {
-                document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-                // Highlight active menu (simple logic)
-                const main = $('#main-view');
-                main.innerHTML = ''; // Clear
-                
-                // --- TEACHER VIEWS ---
-                if(view === 't-dash') {
-                    // Trigger Worker for Stats
-                    worker.postMessage({ type: 'ANALYZE_STATS', data: { results: App.data.results, quizzes: App.data.quizzes } });
-                    worker.onmessage = (e) => {
-                        if(e.data.type === 'STATS_DONE') Teacher.renderCharts(e.data);
-                    };
-                    main.innerHTML = `
-                        <h2>${Lang.get('dashboard')}</h2>
-                        <div class="grid-responsive" style="margin-bottom:20px">
-                            <div class="card flex-between"><div><h3>${App.data.quizzes.length}</h3><small>Đề thi</small></div><i class="fas fa-file-alt fa-2x" style="color:var(--primary)"></i></div>
-                            <div class="card flex-between"><div><h3>${App.data.users.length}</h3><small>Người dùng</small></div><i class="fas fa-users fa-2x" style="color:var(--secondary)"></i></div>
-                        </div>
-                        <div class="grid-responsive">
-                            <div class="card"><canvas id="lineChart"></canvas></div>
-                            <div class="card"><canvas id="radarChart"></canvas></div>
-                        </div>
-                    `;
-                }
-                else if(view === 't-bank') {
-                    main.innerHTML = `
-                        <div class="flex-between"><h2>Ngân hàng câu hỏi nâng cao</h2><button class="btn-primary" onclick="Teacher.addQUI()">+ Thêm</button></div>
-                        <div id="bank-list" style="margin-top:20px"></div>
-                    `;
-                    Teacher.renderBank();
-                }
-
-                // --- STUDENT VIEWS ---
-                else if(view === 's-dash') {
-                    main.innerHTML = `
-                        <h2>Khu vực học tập</h2>
-                        <div class="grid-responsive">
-                            ${App.data.quizzes.map(q => `
-                                <div class="card">
-                                    <h3>${q.title}</h3>
-                                    <p style="color:var(--text-sub)">${q.questions.length} câu hỏi</p>
-                                    <button class="btn-primary" style="width:100%" onclick="Exam.start('${q.id}')">Bắt đầu</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
-                else if(view === 's-srs') {
-                    const dues = SRS.getDue();
-                    main.innerHTML = `
-                        <h2><i class="fas fa-brain"></i> Học lặp lại (Spaced Repetition)</h2>
-                        <div class="card" style="text-align:center; padding:40px">
-                            <div style="font-size:3rem; font-weight:bold; color:var(--primary)">${dues.length}</div>
-                            <p>Câu hỏi cần ôn tập hôm nay</p>
-                            ${dues.length > 0 ? `<button class="btn-primary" onclick="Exam.startSRS()">Ôn tập ngay</button>` : `<p style="color:var(--success)">Bạn đã hoàn thành bài ôn tập!</p>`}
-                        </div>
-                    `;
-                }
-                else if(view === 's-profile') {
-                    main.innerHTML = `
-                        <h2>Hồ sơ & Bảo mật</h2>
-                        <div class="grid-responsive">
-                            <div class="card">
-                                <h3>Xác thực 2 lớp (2FA)</h3>
-                                <p>Quét mã QR bằng ứng dụng Authenticator để lấy mã OTP.</p>
-                                <div id="qrcode" class="flex-center" style="margin:20px"></div>
-                                <button class="btn-outline" onclick="Student.genQR()">Tạo mã QR</button>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-        };
-
-        // --- 8. TEACHER MODULE ---
-        const Teacher = {
-            renderCharts: (data) => {
-                new Chart(document.getElementById('lineChart'), {
-                    type: 'line',
-                    data: { 
-                        labels: data.line.map(d => new Date(d.d).toLocaleDateString()), 
-                        datasets: [{ label: 'Điểm trung bình', data: data.line.map(d => d.s), borderColor: '#4f46e5' }] 
-                    }
-                });
-                new Chart(document.getElementById('radarChart'), {
-                    type: 'radar',
-                    data: {
-                        labels: data.radar.labels,
-                        datasets: [{ label: 'Kỹ năng học sinh', data: data.radar.data, backgroundColor: 'rgba(219, 39, 119, 0.2)', borderColor: '#db2777' }]
-                    }
-                });
-            },
-            renderBank: () => {
-                $('#bank-list').innerHTML = App.data.bank.map(q => `
-                    <div class="card" style="margin-bottom:15px">
-                        <div class="flex-between">
-                            <strong><span style="color:var(--primary)">[${q.type.toUpperCase()}]</span> ${q.text}</strong>
-                            <button class="btn-outline" onclick="Teacher.delQ('${q.id}')"><i class="fas fa-trash"></i></button>
-                        </div>
-                        <div style="margin-top:10px; font-size:0.9rem; color:var(--text-sub)">Tags: ${q.tags}</div>
-                    </div>
-                `).join('');
-            },
-            addQUI: async () => {
-                const { value: formValues } = await Swal.fire({
-                    title: 'Thêm câu hỏi',
-                    html: `
-                        <select id="swal-type" class="input-field" style="margin-bottom:10px">
-                            <option value="mc">Trắc nghiệm</option>
-                            <option value="order">Sắp xếp (Kéo thả)</option>
-                            <option value="match">Ghép nối</option>
-                        </select>
-                        <input id="swal-text" class="input-field" placeholder="Nội dung câu hỏi" style="margin-bottom:10px">
-                        <input id="swal-tags" class="input-field" placeholder="Tags (VD: DaiSo, HinhHoc)" style="margin-bottom:10px">
-                        <textarea id="swal-data" class="input-field" placeholder="Dữ liệu (JSON Array)..."></textarea>
-                    `,
-                    focusConfirm: false,
-                    preConfirm: () => ({
-                        type: $('#swal-type').value,
-                        text: $('#swal-text').value,
-                        tags: $('#swal-tags').value.split(','),
-                        data: JSON.parse($('#swal-data').value || '[]')
-                    })
-                });
-                if(formValues) {
-                    const newQ = { id: Utils.id(), ...formValues };
-                    App.data.bank.push(newQ); // Add to local
-                    await App.save('bank', newQ);
-                    Teacher.renderBank();
-                }
-            }
-        };
-
-        // --- 9. STUDENT & EXAM MODULE (Advanced Types) ---
-        const Student = {
-            genQR: () => {
-                $('#qrcode').innerHTML = '';
-                new QRCode($('#qrcode'), {
-                    text: JSON.stringify({ u: App.user.username, secret: 'EDU_SECRET_KEY' }), // Mock Secret
-                    width: 150, height: 150
-                });
-                Utils.notify('Bảo mật', 'Đã tạo mã QR đăng nhập', 'success');
-            }
-        };
-
-        const Exam = {
-            start: (qid) => {
-                // Simplified Exam Start logic
-                const q = App.data.quizzes.find(x => x.id === qid);
-                // In real app, build questions from Bank based on Quiz config
-                // Here we simulate questions for demonstration of Drag/Drop
-                const demoQuestions = [
-                    { id: 'q1', type: 'order', text: 'Sắp xếp các số theo thứ tự tăng dần', items: ['5', '1', '9', '3'] },
-                    { id: 'q2', type: 'match', text: 'Ghép thủ đô với quốc gia', pairs: [['Vietnam','Hanoi'], ['Japan','Tokyo'], ['USA','DC']] }
-                ];
-                Exam.renderTaking(demoQuestions);
-            },
-            renderTaking: (qs) => {
-                $('#main-view').innerHTML = `
-                    <div style="max-width:800px; margin:0 auto">
-                        ${qs.map((q, idx) => `
-                            <div class="card" style="margin-bottom:20px" id="q-card-${q.id}">
-                                <h4>Câu ${idx+1}: ${q.text}</h4>
-                                <div class="q-content" id="q-content-${q.id}"></div>
-                            </div>
-                        `).join('')}
-                        <button class="btn-primary" style="width:100%" onclick="Exam.submit()">Nộp Bài</button>
-                    </div>
-                `;
-                
-                // Initialize Advanced UI Logic
-                qs.forEach(q => {
-                    const container = document.getElementById(`q-content-${q.id}`);
-                    if(q.type === 'order') {
-                        container.innerHTML = `<ul class="sortable-list">${Utils.shuffle(q.items).map(i => `<li class="sortable-item" data-val="${i}">${i} <i class="fas fa-bars" style="margin-left:auto; color:#ccc"></i></li>`).join('')}</ul>`;
-                        new Sortable(container.querySelector('ul'), { animation: 150 });
-                    }
-                    if(q.type === 'match') {
-                        const left = Utils.shuffle(q.pairs.map(p => p[0]));
-                        const right = Utils.shuffle(q.pairs.map(p => p[1]));
-                        container.innerHTML = `
-                            <div class="match-container">
-                                <div class="match-col">${left.map(i => `<div class="match-item left" onclick="Exam.clickMatch(this, '${i}', 'left')">${i}</div>`).join('')}</div>
-                                <div class="match-col">${right.map(i => `<div class="match-item right" onclick="Exam.clickMatch(this, '${i}', 'right')">${i}</div>`).join('')}</div>
-                            </div>
-                        `;
-                    }
-                });
-            },
-            selectedMatch: null,
-            clickMatch: (el, val, side) => {
-                if(el.classList.contains('matched')) return;
-                
-                if(!Exam.selectedMatch) {
-                    Exam.selectedMatch = { el, val, side };
-                    el.classList.add('selected');
-                } else {
-                    // Check logic
-                    if(Exam.selectedMatch.side !== side) {
-                        // Animation match (Simulated correct)
-                        el.classList.add('matched');
-                        Exam.selectedMatch.el.classList.add('matched');
-                        Exam.selectedMatch.el.classList.remove('selected');
-                        Exam.selectedMatch = null;
-                    } else {
-                        Exam.selectedMatch.el.classList.remove('selected');
-                        Exam.selectedMatch = { el, val, side };
-                        el.classList.add('selected');
-                    }
-                }
-            },
-            submit: () => {
-                Utils.notify('Hoàn thành', 'Hệ thống đã ghi nhận kết quả!', 'success');
-                Router.go('s-dash');
-            }
-        };
-
-        // --- INIT ---
-        window.onload = App.init;
-
-    </script>
+    // Nút kết nối giả lập
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (!this.disabled) {
+          alert('Chức năng này đang giả lập. Để dùng thật cần backend (API + server).');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
